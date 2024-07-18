@@ -11,7 +11,7 @@ provider "adinusa" {
   main_api_url = "https://dev.adinusa.id/api"
   api_url      = "https://dev.adinusa.id/api/pro-training"
   username     = "admin"
-  password     = "Gladiators88"
+  password     = ""
 }
 
 resource "adinusa_enroll_user" "example_enroll" {
