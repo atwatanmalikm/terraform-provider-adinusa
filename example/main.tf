@@ -17,5 +17,5 @@ provider "adinusa" {
 resource "adinusa_enroll_user" "example_enroll" {
   course_name = "Kubernetes Application Developer"
   class_name  = "TEST-API2"
-  username    = "atwatanmalikm2"
+  usernames    = ["atwatanmalikm2"]
 }
