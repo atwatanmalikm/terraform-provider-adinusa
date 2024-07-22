@@ -52,7 +52,7 @@ func resourceEnrollUserCustomizeDiff(ctx context.Context, d *schema.ResourceDiff
 	}
 
 	// Check if Batch ID exists
-	_, err = getBatchIDByClass(client, courseID, className)
+	_, err = getBatchIDByClass(client, courseID, className, courseName)
 	if err != nil {
 		return fmt.Errorf("batch '%s' not found for course '%s'", className, courseName)
 	}
@@ -75,7 +75,7 @@ func resourceEnrollUserCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	// Get Batch ID
-	batchID, err := getBatchIDByClass(client, courseID, className)
+	batchID, err := getBatchIDByClass(client, courseID, className, courseName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -130,7 +130,7 @@ func resourceEnrollUserRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	// Get Batch ID
-	batchID, err := getBatchIDByClass(client, courseID, className)
+	batchID, err := getBatchIDByClass(client, courseID, className, courseName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -211,7 +211,7 @@ func resourceEnrollUserDelete(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	// Get Batch ID
-	batchID, err := getBatchIDByClass(client, courseID, className)
+	batchID, err := getBatchIDByClass(client, courseID, className, courseName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -288,7 +288,7 @@ func enrollUsers(ctx context.Context, d *schema.ResourceData, m interface{}, use
 	}
 
 	// Get Batch ID
-	batchID, err := getBatchIDByClass(client, courseID, className)
+	batchID, err := getBatchIDByClass(client, courseID, className, courseName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -340,7 +340,7 @@ func revokeUsers(ctx context.Context, d *schema.ResourceData, m interface{}, use
 	}
 
 	// Get Batch ID
-	batchID, err := getBatchIDByClass(client, courseID, className)
+	batchID, err := getBatchIDByClass(client, courseID, className, courseName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -377,68 +377,4 @@ func revokeUsers(ctx context.Context, d *schema.ResourceData, m interface{}, use
 	}
 
 	return diags
-}
-
-func getCourseIDByName(client *Client, courseName string) (int, error) {
-	coursesURL := client.APIURL + "/courses/"
-	req, err := http.NewRequest("GET", coursesURL, nil)
-	if err != nil {
-		return 0, err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+client.AuthToken)
-	resp, err := client.Do(req)
-	if err != nil {
-		return 0, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("failed to get courses, status: %s", resp.Status)
-	}
-
-	var courses []map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&courses); err != nil {
-		return 0, err
-	}
-
-	for _, course := range courses {
-		if course["title"].(string) == courseName {
-			return int(course["id"].(float64)), nil
-		}
-	}
-
-	return 0, fmt.Errorf("course '%s' not found", courseName)
-}
-
-func getBatchIDByClass(client *Client, courseID int, className string) (int, error) {
-	batchesURL := fmt.Sprintf("%s/admin/batchs/?course_id=%d", client.APIURL, courseID)
-	req, err := http.NewRequest("GET", batchesURL, nil)
-	if err != nil {
-		return 0, err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+client.AuthToken)
-	resp, err := client.Do(req)
-	if err != nil {
-		return 0, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("failed to get batches, status: %s", resp.Status)
-	}
-
-	var batches []map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&batches); err != nil {
-		return 0, err
-	}
-
-	for _, batch := range batches {
-		if batch["batch"].(string) == className {
-			return int(batch["id"].(float64)), nil
-		}
-	}
-
-	return 0, fmt.Errorf("batch '%s' not found for course ID '%d'", className, courseID)
 }
